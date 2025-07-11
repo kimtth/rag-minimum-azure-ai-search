@@ -7,28 +7,29 @@ from azure.search.documents.models import VectorizedQuery
 
 load_dotenv()
 
-search_endpoint = os.getenv("AZURE_SEARCH_ENDPOINT")
-search_key = os.getenv("AZURE_SEARCH_KEY")
-index_name = os.getenv("AZURE_SEARCH_INDEX_NAME")
-openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-openai_key = os.getenv("AZURE_OPENAI_API_KEY")
-emb_model = os.getenv("AZURE_OPENAI_EMBEDDING_NAME")
-chat_model = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
-api_version = os.getenv("AZURE_OPENAI_API_VERSION", "")
+AZURE_SEARCH_ENDPOINT = os.getenv("AZURE_SEARCH_ENDPOINT")
+AZURE_SEARCH_KEY = os.getenv("AZURE_SEARCH_KEY")
+AZURE_SEARCH_INDEX_NAME = os.getenv("AZURE_SEARCH_INDEX_NAME")
+# AZURE_SEARCH_INDEX_NAME = f'{os.getenv("AZURE_SEARCH_INDEX_NAME")}-pull'
+AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
+AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+AZURE_OPENAI_EMBEDDING_NAME = os.getenv("AZURE_OPENAI_EMBEDDING_NAME")
+AZURE_OPENAI_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "")
 
 openai_client = AzureOpenAI(
-    azure_endpoint=openai_endpoint, api_key=openai_key, api_version=api_version
+    azure_endpoint=AZURE_OPENAI_ENDPOINT, api_key=AZURE_OPENAI_API_KEY, api_version=AZURE_OPENAI_API_VERSION
 )
 
 search_client = SearchClient(
-    endpoint=search_endpoint,
-    index_name=index_name,
-    credential=AzureKeyCredential(search_key)
+    endpoint=AZURE_SEARCH_ENDPOINT,
+    index_name=AZURE_SEARCH_INDEX_NAME,
+    credential=AzureKeyCredential(AZURE_SEARCH_KEY)
 )
 
 # Retrieve context from Azure AI Search using vector search
 def retrieve_context(question, top_k=1):
-    emb_resp = openai_client.embeddings.create(input=question, model=emb_model)
+    emb_resp = openai_client.embeddings.create(input=question, model=AZURE_OPENAI_EMBEDDING_NAME)
     vector_emb = emb_resp.data[0].embedding
     if vector_emb:
         try:
@@ -41,6 +42,7 @@ def retrieve_context(question, top_k=1):
             )
 
             results = search_client.search(
+                # search_text=question, # Optional: When using hybrid search, this field need to be filled with a value
                 vector_queries=[vector_query],
                 select=["question", "answer"],
                 top=5,
@@ -70,7 +72,7 @@ def chat(question):
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": question},
     ]
-    resp = openai_client.chat.completions.create(model=chat_model, messages=messages)
+    resp = openai_client.chat.completions.create(model=AZURE_OPENAI_DEPLOYMENT_NAME, messages=messages)
     return resp.choices[0].message.content
 
 # Main loop for user interaction

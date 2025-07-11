@@ -13,10 +13,11 @@ from azure.search.documents.indexes.models import (
     VectorSearch,
     VectorSearchProfile,
     HnswAlgorithmConfiguration,
-    SearchFieldDataType
+    SearchFieldDataType,
 )
 from openai import AzureOpenAI
 from azure.core.credentials import AzureKeyCredential
+from azure.storage.blob import BlobServiceClient
 
 load_dotenv()
 
@@ -26,11 +27,25 @@ AZURE_SEARCH_INDEX_NAME = os.getenv("AZURE_SEARCH_INDEX_NAME")
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 AZURE_OPENAI_EMBEDDING_NAME = os.getenv("AZURE_OPENAI_EMBEDDING_NAME")
-AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION")
+AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "")
+AZURE_BLOB_STORAGE_CONNECTION_STRING = os.getenv("AZURE_BLOB_STORAGE_CONNECTION_STRING")
+AZURE_BLOB_CONTAINER_NAME = os.getenv("AZURE_BLOB_CONTAINER_NAME")
+
+# Download the FAQ data from Azure Blob Storage if it doesn't exist
+faq_filename = "faq_blob.csv"
+faq_data_path = os.path.join("data", "faq_blob.csv")
+if not os.path.exists(faq_data_path):
+    print(f"FAQ data not found at {faq_data_path}. Downloading...")
+    # Code to download the FAQ data from Azure Blob Storage
+    blob_service_client = BlobServiceClient.from_connection_string(AZURE_BLOB_STORAGE_CONNECTION_STRING)
+    blob_client = blob_service_client.get_blob_client(
+        container=AZURE_BLOB_CONTAINER_NAME, blob="faq_blob.csv"
+    )
+    with open(faq_data_path, "wb") as f:
+        f.write(blob_client.download_blob().readall())
 
 # Initialize Azure AI Search index
 index_client = SearchIndexClient(AZURE_SEARCH_ENDPOINT, AzureKeyCredential(AZURE_SEARCH_KEY))
-
 
 fields = [
     SimpleField(name="id", type=SearchFieldDataType.String, key=True),
@@ -70,7 +85,7 @@ openai_client = AzureOpenAI(
     azure_endpoint=AZURE_OPENAI_ENDPOINT, api_key=AZURE_OPENAI_API_KEY, api_version=AZURE_OPENAI_API_VERSION
 )
 docs = []
-faq_data_path = os.path.join("data", "faq.csv")
+faq_data_path = os.path.join("data", faq_filename)
 start_time = time.time()
 
 with open(faq_data_path, "r", encoding="utf-8-sig") as f:
