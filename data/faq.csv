@@ -1,0 +1,11 @@
+﻿question,answer
+What is Microsoft Copilot?,"Microsoft Copilot is an AI-powered assistant integrated into Microsoft 365 apps and services, designed to help users be more productive by generating content, summarizing information, automating tasks, and answering questions."
+Which apps support Copilot?,"Copilot is available in apps like Word, Excel, PowerPoint, Outlook, Teams, and more, depending on your subscription and organization’s setup."
+How does Copilot work?,"Copilot uses advanced AI models to understand your context and generate relevant suggestions, summaries, or actions based on your input and the data in your documents or emails."
+Is my data safe with Copilot?,Yes. Microsoft Copilot follows strict data privacy and security standards. It does not use your data to train public models and complies with enterprise-grade security protocols.
+Can I customize Copilot’s responses?,"While you can't directly customize its responses, you can guide Copilot by providing clear instructions or context. The more specific your input, the better the output."
+Do I need an internet connection to use Copilot?,"Yes, Copilot requires an internet connection to access cloud-based AI services and deliver real-time assistance."
+Is Copilot available in all languages?,"Copilot supports many languages, but availability may vary depending on the app and region. Microsoft is continuously expanding language support."
+How do I access Copilot in Microsoft 365?,"If your organization has Copilot enabled, you’ll see Copilot features within supported apps. You may need a Microsoft 365 subscription that includes Copilot."
+Can Copilot help with coding?,"Yes, in environments like GitHub Copilot or Copilot in Visual Studio, it can assist with code generation, debugging, and learning programming concepts."
+Who can I contact for support with Copilot?,"You can reach out to your IT administrator or Microsoft support for help with setup, troubleshooting, or feature access."
