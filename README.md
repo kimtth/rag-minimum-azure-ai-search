@@ -8,7 +8,7 @@
 
 ## Ingest FAQ
 
-- To use Vector Search in Azure AI Search, you need a vectorizer, which uses the Azure OpenAI Embedding model to turn your text into a numerical embedding. If you prefer, you can also create the embedding yourself and provide it directly to Azure AI Search for Vector Search. 
+- To use Vector Search in Azure AI Search, a vectorizer can connect the Azure OpenAI Embedding model to turn your text into a numerical embedding. If you prefer, without using a vectorizer, you can also create the embedding yourself and provide it directly to Azure AI Search for Vector Search. 
 - Options 1 and 3 demonstrate how to provide the embedding directly without using a vectorizer. - `chat_app.py` uses `VectorizedQuery`. 
 - Options 2 and 4 demonstrate the use of a vectorizer along with semantic search. - `chat_app_v2.py` uses `VectorizableTextQuery`.
 
