@@ -43,6 +43,6 @@
 
 ## Azure AI Foundry
 
-To connect Azure AI Search with Azure AI Foundry, you need to add both a vectorizer and semantic search to the index. [Use an existing AI Search index with the Azure AI Search tool](https://review.learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/azure-ai-search?branch=main&tabs=azurecli)
+To connect Azure AI Search with Azure AI Foundry, you need to add both a vectorizer and semantic search to the index. [Use an existing AI Search index with the Azure AI Search tool](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/azure-ai-search?branch=main&tabs=azurecli)
 
 📚 Learn more: [csv indexer](https://github.com/Azure/azure-search-vector-samples/tree/main/demo-python/code/indexers/csv-indexer)
