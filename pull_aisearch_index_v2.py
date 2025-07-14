@@ -23,6 +23,12 @@ from azure.search.documents.indexes.models import (
     SearchIndexerDataSourceType,
     SearchIndexerDataContainer,
     SearchIndexerDataSourceConnection,
+    AzureOpenAIVectorizer,
+    AzureOpenAIVectorizerParameters,
+    SemanticConfiguration,
+    SemanticSearch,
+    SemanticPrioritizedFields,
+    SemanticField,
     BlobIndexerParsingMode,
 )
 from azure.core.credentials import AzureKeyCredential
@@ -57,19 +63,44 @@ fields = [
     ),
 ]
 
-# Create vector search configuration
+# Vector search configuration
 vector_search = VectorSearch(
     profiles=[
         VectorSearchProfile(
             name="faq-vector-config",
             algorithm_configuration_name="faq-algorithms-config",
+            vectorizer_name="faq-vectorizer",
         )
     ],
     algorithms=[HnswAlgorithmConfiguration(name="faq-algorithms-config")],
+    vectorizers=[
+        AzureOpenAIVectorizer(
+            vectorizer_name="faq-vectorizer",
+            parameters=AzureOpenAIVectorizerParameters(
+                resource_url=AZURE_OPENAI_ENDPOINT,
+                deployment_name=AZURE_OPENAI_EMBEDDING_NAME,
+                model_name=AzureOpenAIModelName.TEXT_EMBEDDING3_LARGE,
+                api_key=AZURE_OPENAI_API_KEY,
+            ),
+        ),
+    ],
 )
 
+semantic_config = SemanticConfiguration(
+    name="faq-semantic-config",
+    prioritized_fields=SemanticPrioritizedFields(
+        title_field=SemanticField(field_name="question"),
+        content_fields=[SemanticField(field_name="answer")],
+    ),
+)
+
+semantic_search = SemanticSearch(configurations=[semantic_config])
+
 index = SearchIndex(
-    name=AZURE_SEARCH_INDEX_NAME, fields=fields, vector_search=vector_search
+    name=AZURE_SEARCH_INDEX_NAME,
+    fields=fields,
+    vector_search=vector_search,
+    semantic_search=semantic_search,
 )
 
 # If the index already exists, delete it before creating a new one
@@ -115,24 +146,16 @@ embedding_skill = AzureOpenAIEmbeddingSkill(
     model_name=AzureOpenAIModelName.TEXT_EMBEDDING3_LARGE,
     dimensions=3072,
     inputs=[
-        InputFieldMappingEntry(
-            name="text", 
-            source="/document/question"
-        ),
+        InputFieldMappingEntry(name="text", source="/document/question"),
     ],
-    outputs=[
-        OutputFieldMappingEntry(
-            name="embedding",
-            target_name="emb_vector"
-        )
-    ],
+    outputs=[OutputFieldMappingEntry(name="embedding", target_name="emb_vector")],
 )
 
 skills = [embedding_skill]
 skillset = SearchIndexerSkillset(
     name=skillset_name,
     description="Skillset to chunk documents and generating embeddings",
-    skills=skills
+    skills=skills,
 )
 
 indexer_client.create_or_update_skillset(skillset)
@@ -153,7 +176,7 @@ indexer_parameters_config = IndexingParametersConfiguration(
     # https://github.com/Azure/azure-sdk-for-python/issues/33382
     query_timeout=None,
 )
-                  
+
 indexer_parameters = IndexingParameters(
     configuration=indexer_parameters_config,
 )
@@ -168,22 +191,19 @@ indexer = SearchIndexer(
     field_mappings=[
         FieldMapping(
             # !important: Do not use '/document' prefix to indicate the source field
-            source_field_name="question", 
-            target_field_name="question"
+            source_field_name="question",
+            target_field_name="question",
         ),
-        FieldMapping(
-            source_field_name="answer", 
-            target_field_name="answer"
-        )
+        FieldMapping(source_field_name="answer", target_field_name="answer"),
     ],
     # Map output fields for embedding vectors to index fields
     output_field_mappings=[
         FieldMapping(
             # sourceFieldName is an invalid path: path must begin with '/document'
             source_field_name="/document/emb_vector/*",
-            target_field_name="vector"
+            target_field_name="vector",
         )
-    ]
+    ],
 )
 
 indexer_result = indexer_client.create_or_update_indexer(indexer)

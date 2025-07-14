@@ -3,14 +3,14 @@ from dotenv import load_dotenv
 from openai import AzureOpenAI
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
-from azure.search.documents.models import VectorizedQuery
+from azure.search.documents.models import VectorizableTextQuery
 
 load_dotenv()
 
 AZURE_SEARCH_ENDPOINT = os.getenv("AZURE_SEARCH_ENDPOINT")
 AZURE_SEARCH_KEY = os.getenv("AZURE_SEARCH_KEY")
 AZURE_SEARCH_INDEX_NAME = os.getenv("AZURE_SEARCH_INDEX_NAME")
-# If you want to use a different index name for pull, uncomment the next line
+# If you want to use a different index for pull, uncomment the next line
 # AZURE_SEARCH_INDEX_NAME = f'{os.getenv("AZURE_SEARCH_INDEX_NAME")}-pull'
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
@@ -28,37 +28,26 @@ search_client = SearchClient(
     credential=AzureKeyCredential(AZURE_SEARCH_KEY)
 )
 
-# Retrieve context from Azure AI Search using VectorizedQuery
+# Retrieve context from Azure AI Search using Vector Search
 def retrieve_context(question, top_k=3):
-    emb_resp = openai_client.embeddings.create(input=question, model=AZURE_OPENAI_EMBEDDING_NAME)
-    vector_emb = emb_resp.data[0].embedding
-    if vector_emb:
-        try:
-            vector_query = VectorizedQuery(
-                vector=vector_emb,
-                k_nearest_neighbors=5,
-                fields="vector",
-                kind="vector",
-                exhaustive=True
-            )
+    try:
+        vector_query = VectorizableTextQuery(text=question, k_nearest_neighbors=50, fields="vector")
 
-            results = search_client.search(
-                # search_text=question, # Optional: When using hybrid search, this field need to be filled with a value
-                vector_queries=[vector_query],
-                select=["question", "answer"],
-                top=top_k,
-                include_total_count=True
-            )
+        results = search_client.search(
+            # search_text=question, # Optional: When using hybrid search, this field need to be filled with a value
+            vector_queries=[vector_query],
+            select=["question", "answer"],
+            top=top_k,
+            include_total_count=True
+        )
 
-            print(f"Total results: {results.get_count()}")
-            context = ''
-            for doc in results:
-                context += f"- Question: {doc['question']}, Answer: {doc['answer']}\n"
-            return context.split('\n') if context else []
-        except Exception as ex:
-            print("Vector search failed:", ex)
-    else:
-        print("No vector loaded, skipping search.")
+        print(f"Total results: {results.get_count()}")
+        context = ''
+        for doc in results:
+            context += f"- Question: {doc['question']}, Answer: {doc['answer']}\n"
+        return context.split('\n') if context else []
+    except Exception as ex:
+        print("Vector search failed:", ex)
 
 
 # Chat function to interact with the user
